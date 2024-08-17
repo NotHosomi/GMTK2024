@@ -6,9 +6,11 @@ public class CameraController : MonoBehaviour
 {
     Camera cam;
     Transform rTransform;
-    [SerializeField] float speed = 10;
-    [SerializeField] float yLim = 100;
-    [SerializeField] float xLim = 50;
+    float speed = 10;
+    float yLimUpper = 100;
+    float yLimLower = 3;
+    float xLimUpper = 11;
+    float xLimLower = 0;
 
     void Start()
     {
@@ -38,21 +40,21 @@ public class CameraController : MonoBehaviour
             pos.x += delta;
         }
 
-        if (pos.x < -xLim)
+        if (pos.x < xLimLower)
         {
-            pos.x = -xLim;
+            pos.x = xLimLower;
         }
-        if (pos.x > xLim)
+        if (pos.x > xLimUpper)
         {
-            pos.x = xLim;
+            pos.x = xLimUpper;
         }
-        if (pos.y < 0)
+        if (pos.y < yLimLower)
         {
-            pos.y = 0;
+            pos.y = yLimLower;
         }
-        if (pos.y > yLim)
+        if (pos.y > yLimUpper)
         {
-            pos.y = yLim;
+            pos.y = yLimUpper;
         }
         rTransform.position = pos;
     }

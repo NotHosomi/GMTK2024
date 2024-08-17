@@ -2,46 +2,96 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Block
+public class Block : MonoBehaviour
 {
-    GameObject m_oFront;
-    GameObject m_oBack;
-    Vector2Int m_tSnappedPos;
+
+    GameObject m_oInterior;
     Vector2Int m_tOffset;
-    
-    public Block(Vector2Int tOffset)
+    bool m_bHasOpenRoof;
+    bool m_bHasOpenBase;
+
+    public static Block NewBlock(Transform tParent, Vector2Int tOffset, bool outline = true)
     {
-        m_tOffset = tOffset;
+        // set our gameobject pos
+        GameObject obj = new GameObject();
+        obj.name = "Wall";
+        obj.transform.parent = tParent;
+        obj.transform.localPosition = new Vector3(tOffset.x, tOffset.y);
 
-        // spriteFront = random wall texture
-        m_oFront = new GameObject();
-        SpriteRenderer frontRenderer = m_oFront.AddComponent<SpriteRenderer>();
-        Sprite frontSprite = Resources.Load<Sprite>("Sprites/ExampleWall");
-        frontRenderer.sprite = frontSprite;
-        frontRenderer.sortingLayerID = 1;
+        // create the block
+        Block block = obj.AddComponent<Block>();
+        block.m_tOffset = tOffset;
 
-        // create rear
-        m_oBack = new GameObject();
-        SpriteRenderer backRenderer = m_oBack.AddComponent<SpriteRenderer>();
-        Sprite backSprite = Resources.Load<Sprite>("Sprites/Blank64");
-        backRenderer.sprite = backSprite;
-        backRenderer.color = new Color(0.2f, 0.2f, 0.2f);
-        backRenderer.sortingLayerID = -1;
+        // create the wall sprite
+        SpriteRenderer sr = obj.AddComponent<SpriteRenderer>();
+        Sprite sprite = Resources.Load<Sprite>("Sprites/ExampleWall");
+        sr.sprite = sprite;
+        sr.transform.position = obj.transform.position;
+
+        // create the interior object
+        block.m_oInterior = new GameObject();
+        block.m_oInterior.name = "Interior";
+        block.m_oInterior.transform.parent = obj.transform;
+        block.m_oInterior.transform.localPosition = new Vector3(0,0,2);
+        if(outline)
+        {
+            block.m_oInterior.transform.localScale *= 1.1f;
+        }
+
+        // create interior sprite
+        sr = block.m_oInterior.AddComponent<SpriteRenderer>();
+        sprite = Resources.Load<Sprite>("Sprites/Blank64");
+        sr.sprite = sprite;
+        sr.color = new Color(0f, 0f, 0f, 0.5f);
+
+        BoxCollider2D col = obj.AddComponent<BoxCollider2D>();
+
+
+        return block;
+    }
+    public static Block NewObstruction(Transform tParent, Vector2Int tOffset)
+    {
+        GameObject obj = new GameObject();
+        obj.transform.parent = tParent;
+        obj.transform.localPosition = new Vector3(tOffset.x, tOffset.y, 0);
+
+        obj.AddComponent<BoxCollider2D>();
+        
+        SpriteRenderer sr = obj.AddComponent<SpriteRenderer>();
+        Sprite sprite = Resources.Load<Sprite>("Sprites/TempObstruction");
+        sr.sprite = sprite;
+
+        Block block = obj.AddComponent<Block>();
+        block.m_tOffset = tOffset;
+
+        return block;
     }
 
-    public void SetOffset(Vector2Int tOffset)
+    public Vector2Int GetOffet()
     {
-        m_tOffset = tOffset;
+        return m_tOffset;
     }
 
-    public void SetPos(Vector2 pos)
+    public void SetInteriorColour(Color newCol)
     {
-        m_oBack.transform.position = pos + m_tOffset;
-        m_oFront.transform.position = pos + m_tOffset;
+        m_oInterior.GetComponent<SpriteRenderer>().color = newCol;
     }
 
-    public Vector2 GetPos()
+    public void SetOpenRoof(bool open) { m_bHasOpenRoof = open; }
+    public void SetOpenBase(bool open) { m_bHasOpenBase = open; }
+    public bool GetOpenRoof() { return m_bHasOpenRoof; }
+    public bool GetOpenBase() { return m_bHasOpenBase; }
+
+    public void OnAddToTower()
     {
-        return m_tSnappedPos;
+        transform.parent = null;
+        Vector3 pos = transform.position;
+        pos.z = -1;
+        transform.position = pos;
+        if (m_oInterior != null)
+        {
+            SetInteriorColour(new Color(0, 1, 1, 1));
+            m_oInterior.transform.localScale = new Vector3(1,1,1);
+        }
     }
 }

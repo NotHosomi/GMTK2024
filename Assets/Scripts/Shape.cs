@@ -1,119 +1,206 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Shape : MonoBehaviour
 {
-    bool m_bCarried = false;
+    public static List<Shape> ms_vShapes = new List<Shape>();
+    bool m_bHeld = false;
     List<Block> m_vBlocks;
-    List<Vector2Int> m_vBlockOffsets;
-    List<Vector2Int> m_vObstructionOffsets;
-    List<Vector2Int> m_vOpenEdges;
 
-    bool IsEdgeFree(Vector2Int offset)
+    List<Vector2Int> m_vBlockPositions;
+    List<Vector2Int> m_vObstructedSlots;
+
+    List<Vector2Int> m_vOpenSlots;
+    List<Vector2Int> m_vOpenBaseSlots;
+    List<Vector2Int> m_vOpenRoofSlots;
+
+    Vector3 m_tGrabDelta = new Vector3();
+
+    void Awake()
     {
-        foreach(Vector2Int tUsed in m_vBlockOffsets)
-        {
-            if(offset == tUsed)
-            {
-                return false;
-            }    
-        }
-        return true;
-    }
-    void Start()
-    {
-        m_vOpenEdges = new List<Vector2Int>
+        ms_vShapes.Add(this);
+        int yOffset = 0;
+        // add the initial block
+        m_vBlocks = new List<Block>();
+        m_vBlocks.Add(Block.NewBlock(transform, new Vector2Int(0, 0)));
+        m_vOpenSlots = new List<Vector2Int>
         {
             new Vector2Int(1,0),
             new Vector2Int(-1,0),
             new Vector2Int(0,1),
             new Vector2Int(0,-1),
         };
-        m_vBlockOffsets = new List<Vector2Int> { new Vector2Int(0, 0) };
-
-        m_vBlocks = new List<Block>();
-        m_vBlocks.Add(new Block());
+        m_vBlockPositions = new List<Vector2Int> { new Vector2Int(0, 0) };
+        m_vOpenBaseSlots = new List<Vector2Int> { new Vector2Int(0, -1) };
+        m_vOpenRoofSlots = new List<Vector2Int> { new Vector2Int(0, 1) };
+        m_vObstructedSlots = new List<Vector2Int>();
 
         int blockCount = 1;
-        int maxBlocks = Random.Range(2, 5);
+        int obstructionCount = 0;
+        int maxBlocks = Random.Range(2, 5); // create 1 to 4 additional blocks
+        int maxObstructions = Random.Range(0, maxBlocks); 
+        Debug.Log("Generating shape with " + maxBlocks + " blocks and " + maxObstructions + " obstructions");
+
+        // create blocks
         while (blockCount < maxBlocks)
         {
-            // pick where to store the new block
-            int offsetIdx = Random.Range(0, m_vOpenEdges.Count);
-            Vector2Int newBlockOffset = m_vOpenEdges[offsetIdx];
-            m_vOpenEdges.RemoveAt(offsetIdx);
-            m_vBlockOffsets.Add(newBlockOffset);
+            Vector2Int selection = PickOpenSlot();
+            m_vBlockPositions.Add(selection);
+            FindNewNeighbours(selection);
 
-            // find new open edges
-            Vector2Int newEdge = newBlockOffset;
-            newEdge.y += 1;
-            if (IsEdgeFree(newEdge)) { m_vOpenEdges.Add(newEdge); }
-            newEdge = newBlockOffset;
-            newEdge.y -= 1;
-            if (IsEdgeFree(newEdge)) { m_vOpenEdges.Add(newEdge); }
-            newEdge = newBlockOffset;
-            newEdge.x -= 1;
-            if (IsEdgeFree(newEdge)) { m_vOpenEdges.Add(newEdge); }
-            newEdge = newBlockOffset;
-            newEdge.x += 1;
-            if (IsEdgeFree(newEdge)) { m_vOpenEdges.Add(newEdge); }
-
-
-            m_vBlocks.Add(new Block());
+            // instantiate the block
+            m_vBlocks.Add(Block.NewBlock(transform, selection));
             ++blockCount;
+
+            // check if the shape's initial location needs to be raised
+            if(selection.y < yOffset)
+            {
+                yOffset = selection.y;
+            }
         }
 
-        int obstructionCount = 0;
-        int maxObstructions = Random.Range(0, blockCount);
+        // create obstructions
         while(obstructionCount < maxObstructions)
         {
-
+            Vector2Int selection = PickOpenSlot();
+            m_vObstructedSlots.Add(selection);
+        
+            // instantiate the block
+            m_vBlocks.Add(Block.NewObstruction(transform, selection));
+            ++obstructionCount;
+        
+            // check if the shape's initial location needs to be raised
+            if (selection.y < yOffset)
+            {
+                yOffset = selection.y;
+            }
         }
+
+        // set the initial pos of all 
+        Vector3 pos = transform.position;
+        pos.y -= yOffset;
+        pos.z = -5;
+        transform.position = pos;
     }
 
-    void Init()
+    Vector2Int PickOpenSlot()
     {
+        // pick where to place the new block
+        int offsetIdx = Random.Range(0, m_vOpenSlots.Count);
+        Vector2Int selection = m_vOpenSlots[offsetIdx];
 
+        // remove the selected position from slots
+        m_vOpenSlots.RemoveAt(offsetIdx);
+        if (m_vOpenBaseSlots.Contains(selection)) { m_vOpenBaseSlots.Remove(selection); }
+        if (m_vOpenRoofSlots.Contains(selection)) { m_vOpenBaseSlots.Remove(selection); }
+        return selection;
+    }
+
+    void FindNewNeighbours(Vector2Int pos)
+    {
+        Vector2Int newNeighbour = pos;
+        newNeighbour.x -= 1;
+        if (!m_vBlockPositions.Contains(newNeighbour)) { m_vOpenSlots.Add(newNeighbour); }
+        newNeighbour = pos;
+        newNeighbour.x += 1;
+        if (!m_vBlockPositions.Contains(newNeighbour)) { m_vOpenSlots.Add(newNeighbour); }
+        newNeighbour.y += 1;
+        if (!m_vBlockPositions.Contains(newNeighbour))
+        {
+            m_vOpenSlots.Add(newNeighbour);
+            m_vOpenRoofSlots.Add(newNeighbour);
+        }
+        newNeighbour = pos;
+        newNeighbour.y -= 1;
+        if (!m_vBlockPositions.Contains(newNeighbour))
+        {
+            m_vOpenSlots.Add(newNeighbour);
+            m_vOpenBaseSlots.Add(newNeighbour);
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(m_bCarried)
+        if(m_bHeld)
         {
-            CarryUpdate();
+            HeldUpdate();
         }
         else
         {
-            DropUpdate();
+            NotHeldUpdate();
         }
     }
 
-    void CarryUpdate()
+    void HeldUpdate()
     {
+        Vector3 tMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        tMousePos.z = 0;
+        transform.position = tMousePos + m_tGrabDelta;
 
-    }
-
-    void DropUpdate()
-    {
-
-    }
-
-    void Grab()
-    {
-        m_bCarried = true;
-    }
-    void Drop()
-    {
-        m_bCarried = false;
-    }
-
-    void SetPos(Vector2 pos)
-    {
-        for(int i = 0; i < m_vBlocks.Count; ++i)
+        // check if we can snap
+        List<Vector2Int> platforms = Tower.Get().GetPlatforms();
+        Vector2Int roundedOrigin = new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
+        bool couldAttach = false;
+        foreach(Vector2Int platformCoord in platforms)
         {
-            m_vBlocks[i].SetPos(pos + m_vBlockOffsets[i]);
+            foreach(Vector2Int offset in m_vBlockPositions)
+            {
+                if(roundedOrigin + offset == platformCoord)
+                {
+                    couldAttach = true;
+                }
+            }
         }
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            m_bHeld = false;
+            if(couldAttach)
+            {
+                if(!TryAttach())
+                {
+                    // failed to attach
+                }
+            }
+        }
+        if (!couldAttach)
+        {
+            return;
+        }
+    }
+
+    void NotHeldUpdate()
+    {
+        Vector3 tMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        tMousePos.z = 0;
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            m_bHeld = true;
+            m_tGrabDelta = transform.position - tMousePos;
+        }
+    }
+
+    public List<Vector2Int> GetFootprint()
+    {
+        return m_vBlockPositions.Union(m_vObstructedSlots).ToList();
+    }
+
+    public List<Block> GetBlocks()
+    {
+        return m_vBlocks;
+    }
+
+    bool TryAttach()
+    {
+        Debug.Log("Trying to attach shape to tower");
+        return true;
+    }
+    public List<Vector2Int> GetOpenRoofSlots()
+    {
+        return m_vOpenRoofSlots;
     }
 }
