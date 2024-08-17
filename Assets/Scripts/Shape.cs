@@ -18,13 +18,15 @@ public class Shape : MonoBehaviour
 
     Vector3 m_tGrabDelta = new Vector3();
 
+    bool m_bCouldAttach = false;
+
     void Awake()
     {
         ms_vShapes.Add(this);
         int yOffset = 0;
         // add the initial block
         m_vBlocks = new List<Block>();
-        m_vBlocks.Add(Block.NewBlock(transform, new Vector2Int(0, 0)));
+        m_vBlocks.Add(Block.NewBlock(transform, new Vector2Int(0, 0), true, "Sprites/Wall1"));
         m_vOpenSlots = new List<Vector2Int>
         {
             new Vector2Int(1,0),
@@ -141,47 +143,19 @@ public class Shape : MonoBehaviour
         transform.position = tMousePos + m_tGrabDelta;
 
         // check if we can snap
-        List<Vector2Int> platforms = Tower.Get().GetPlatforms();
-        Vector2Int roundedOrigin = new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
-        bool couldAttach = false;
-        foreach(Vector2Int platformCoord in platforms)
+        m_bCouldAttach = HasPotentialConnection();
+        if (m_bCouldAttach)
         {
-            foreach(Vector2Int offset in m_vBlockPositions)
-            {
-                if(roundedOrigin + offset == platformCoord)
-                {
-                    couldAttach = true;
-                }
-            }
+            HighlightManager.Get().DrawPreview(Origin(), m_vBlockPositions);
         }
-
-        if (Input.GetMouseButtonDown(0))
+        else
         {
-            m_bHeld = false;
-            if(couldAttach)
-            {
-                if(!TryAttach())
-                {
-                    // failed to attach
-                }
-            }
-        }
-        if (!couldAttach)
-        {
-            return;
+            HighlightManager.Get().HidePreview();
         }
     }
 
     void NotHeldUpdate()
     {
-        Vector3 tMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        tMousePos.z = 0;
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            m_bHeld = true;
-            m_tGrabDelta = transform.position - tMousePos;
-        }
     }
 
     public List<Vector2Int> GetFootprint()
@@ -194,13 +168,80 @@ public class Shape : MonoBehaviour
         return m_vBlocks;
     }
 
-    bool TryAttach()
-    {
-        Debug.Log("Trying to attach shape to tower");
-        return true;
-    }
     public List<Vector2Int> GetOpenRoofSlots()
     {
         return m_vOpenRoofSlots;
+    }
+
+    public void Grab()
+    {
+        m_bHeld = true;
+        
+        // have the object jump up when grabbed
+        Vector3 pos = transform.position; 
+        pos.y += 0.1f;
+        transform.position = pos;
+
+        // set the grab delta
+        Vector3 tMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        tMousePos.z = 0;
+        m_tGrabDelta = transform.position - tMousePos;
+    }
+
+    public void Release()
+    {
+        // check if we can snap now?
+        if (m_bCouldAttach && TryAttach())
+        {
+            return;
+        }
+        else
+        {
+            m_bHeld = false;
+            Vector3 pos = transform.position;
+            pos.x = 9;
+            foreach(Vector2Int offset in m_vBlockPositions)
+            {
+                if (offset.y < -pos.y)
+                {
+                    pos.y = -offset.y;
+                }
+            }
+            transform.position = pos;
+        }
+    }
+    public bool HasPotentialConnection()
+    {
+        bool couldConnect = false;
+        Vector2Int origin = Origin();
+        foreach (Vector2Int platformCoord in Tower.Get().GetPlatforms())
+        {
+            foreach (Vector2Int offset in m_vOpenBaseSlots)
+            {
+                if (origin + offset == platformCoord)
+                {
+                    Debug.Log("Valid connection coord: " + platformCoord);
+                    couldConnect = true;
+                }
+            }
+        }
+        return couldConnect;
+    }
+    bool TryAttach()
+    {
+        Debug.Log("Trying to attach shape to tower");
+
+        if (Tower.Get().CheckValidity(this))
+        {
+            Tower.Get().AttachToTower(this);
+            return true;
+        }
+
+        return true;
+    }
+
+    public Vector2Int Origin()
+    {
+        return new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
     }
 }

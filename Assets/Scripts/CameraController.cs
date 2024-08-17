@@ -6,7 +6,7 @@ public class CameraController : MonoBehaviour
 {
     Camera cam;
     Transform rTransform;
-    float speed = 10;
+    float speed = 20;
     float yLimUpper = 100;
     float yLimLower = 3;
     float xLimUpper = 11;
@@ -23,6 +23,10 @@ public class CameraController : MonoBehaviour
     {
         Vector3 pos = rTransform.position;
         float delta = speed * Time.deltaTime;
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            delta *= 2;
+        }
         if (Input.GetKey(KeyCode.W))
         {
             pos.y += delta;

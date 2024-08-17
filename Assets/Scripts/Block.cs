@@ -10,7 +10,7 @@ public class Block : MonoBehaviour
     bool m_bHasOpenRoof;
     bool m_bHasOpenBase;
 
-    public static Block NewBlock(Transform tParent, Vector2Int tOffset, bool outline = true)
+    public static Block NewBlock(Transform tParent, Vector2Int tOffset, bool outline = true, string texture = "Sprites/ExampleWall")
     {
         // set our gameobject pos
         GameObject obj = new GameObject();
@@ -24,7 +24,7 @@ public class Block : MonoBehaviour
 
         // create the wall sprite
         SpriteRenderer sr = obj.AddComponent<SpriteRenderer>();
-        Sprite sprite = Resources.Load<Sprite>("Sprites/ExampleWall");
+        Sprite sprite = Resources.Load<Sprite>(texture);
         sr.sprite = sprite;
         sr.transform.position = obj.transform.position;
 
@@ -67,14 +67,17 @@ public class Block : MonoBehaviour
         return block;
     }
 
-    public Vector2Int GetOffet()
+    public Vector2Int GetOffset()
     {
         return m_tOffset;
     }
 
     public void SetInteriorColour(Color newCol)
     {
-        m_oInterior.GetComponent<SpriteRenderer>().color = newCol;
+        if(m_oInterior != null)
+        {
+            m_oInterior.GetComponent<SpriteRenderer>().color = newCol;
+        }
     }
 
     public void SetOpenRoof(bool open) { m_bHasOpenRoof = open; }
@@ -82,10 +85,12 @@ public class Block : MonoBehaviour
     public bool GetOpenRoof() { return m_bHasOpenRoof; }
     public bool GetOpenBase() { return m_bHasOpenBase; }
 
-    public void OnAddToTower()
+    public void OnAddToTower(Vector2Int shapeOrigin)
     {
         transform.parent = null;
         Vector3 pos = transform.position;
+        pos.x = shapeOrigin.x + m_tOffset.x;
+        pos.y = shapeOrigin.y + m_tOffset.y;
         pos.z = -1;
         transform.position = pos;
         if (m_oInterior != null)
@@ -93,5 +98,6 @@ public class Block : MonoBehaviour
             SetInteriorColour(new Color(0, 1, 1, 1));
             m_oInterior.transform.localScale = new Vector3(1,1,1);
         }
+        m_tOffset = new Vector2Int(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
     }
 }
