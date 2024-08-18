@@ -10,7 +10,7 @@ public class CameraController : MonoBehaviour
     float yLimUpper = 100;
     float yLimLower = 3;
     float xLimUpper = 11;
-    float xLimLower = 0;
+    float xLimLower = 6;
 
     void Start()
     {
@@ -21,6 +21,7 @@ public class CameraController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3 pos = rTransform.position;
         float delta = speed * Time.deltaTime;
         if (Input.GetKey(KeyCode.LeftShift))
@@ -31,9 +32,17 @@ public class CameraController : MonoBehaviour
         {
             pos.y += delta;
         }
+        else if(mousePos.y > Camera.main.transform.position.y + 3.5f)
+        {
+            pos.y += delta / 2;
+        }
         if (Input.GetKey(KeyCode.S))
         {
             pos.y -= delta;
+        }
+        else if (mousePos.y < Camera.main.transform.position.y - 3.5f)
+        {
+            pos.y -= delta / 2;
         }
         if (Input.GetKey(KeyCode.A))
         {
