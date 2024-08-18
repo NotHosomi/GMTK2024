@@ -8,8 +8,6 @@ public class CameraController : MonoBehaviour
     Transform rTransform;
     float speed = 20;
     float yLimLower = 3;
-    float xLimUpper = 11;
-    float xLimLower = 6;
 
     void Start()
     {

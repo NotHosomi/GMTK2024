@@ -21,7 +21,7 @@ public class Shape : MonoBehaviour
     Vector3 m_tGrabDelta = new Vector3();
 
     bool m_bCouldAttach = false;
-    static int ms_nTrayCount = 0;
+    bool m_bLocked = false;
 
     void Awake()
     {
@@ -313,5 +313,31 @@ public class Shape : MonoBehaviour
             }
         }
         return max;
+    }
+
+    // returns false if it was already locked;
+    public bool Lock()
+    {
+        if(m_bLocked)
+        {
+            return false;
+        }
+        m_bLocked = true;
+        foreach (Block block in m_vBlocks)
+        {
+            BoxCollider2D col = block.GetComponent<BoxCollider2D>();
+            if (col != null)
+            {
+                col.enabled = false;
+            }
+        }
+        Vector3 pos = transform.localPosition;
+        pos.z = 1;
+        return true;
+    }
+    public void ReturnToTray()
+    {
+        m_bHeld = false;
+        Tray.Get().Add(this);
     }
 }

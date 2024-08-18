@@ -6,6 +6,7 @@ using TMPro;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] GameObject scoreDisplay;
+    [SerializeField] GameObject dayDisplay;
 
     [SerializeField] Gradient tDaySky;
     [SerializeField] Gradient tNightSky;
@@ -15,9 +16,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] float m_fDayLengthSecs;
     [SerializeField] float m_fNightLengthSecs;
     [SerializeField] float m_fPhaseTime = 0;
-    int m_nCycles = 0;
 
     int m_nScore = 0;
+    int m_nCycles = 0;
 
     enum E_Phase
     {
@@ -40,7 +41,10 @@ public class GameManager : MonoBehaviour
         Tower.Init();
     }
 
-    
+    private void Start()
+    {
+        Tray.Get().Refill();
+    }
 
     void Update()
     {
@@ -72,24 +76,13 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    IEnumerator SpawnShapes(int n)
-    {
-        for (int i = 0; i < n; ++i)
-        {
-            GameObject obj = new GameObject();
-            Vector3 pos = new Vector3(i * 4 - 1, Tower.Get().GetHeight() + 1, 0);
-            obj.transform.position = pos;
-            yield return new WaitForSeconds(0.5f);
-        }
-    }
-
     void BecomeDay()
     {
         m_fPhaseTime = 0;
         m_ePhase = E_Phase.day;
         Tower.Get().OnDayTime();
-        m_nCycles++;
-        StartCoroutine("SpawnShapes", 3);
+        ++m_nCycles;
+        dayDisplay.GetComponent<TextMeshPro>().text = (m_nCycles+1).ToString();
     }
 
     void BecomeNight()
@@ -97,6 +90,16 @@ public class GameManager : MonoBehaviour
         m_fPhaseTime = 0;
         m_ePhase = E_Phase.night;
         Tower.Get().OnNightTime();
+
+        Shape shape = Cursor.Get().GetHeldShape();
+        Cursor.Get().ForgetHeldShape();
+        HighlightManager.Get().HidePreview();
+        HighlightManager.Get().HideValidity();
+        if (shape != null)
+        {
+            shape.ReturnToTray();
+        }
+        Tray.Get().Refill();
     }
 
     public bool IsNight()
@@ -104,12 +107,24 @@ public class GameManager : MonoBehaviour
         return m_ePhase == E_Phase.night;
     }
 
+    public void SkipDay()
+    {
+        if(m_ePhase == E_Phase.night)
+        {
+            return;
+        }
+        m_fPhaseTime = m_fDayLengthSecs - 2;
+    }
+
     public void AddScore(int amount, Vector2Int coord)
     {
-        GameObject number = Instantiate(Resources.Load("Prefabs/ScoreNumber") as GameObject);
-        number.GetComponent<ScoreNumber>().init(amount);
-        number.transform.position = new Vector3(coord.x, coord.y, -9.5f);
-        AddScore(amount);
+        if (amount != 0)
+        {
+            GameObject number = Instantiate(Resources.Load("Prefabs/ScoreNumber") as GameObject);
+            number.GetComponent<ScoreNumber>().init(amount);
+            number.transform.position = new Vector3(coord.x, coord.y, -9.5f);
+            AddScore(amount);
+        }
     }
     public void AddScore(int amount)
     {

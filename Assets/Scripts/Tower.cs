@@ -131,7 +131,10 @@ public class Tower
         Shape.ms_vShapes.Remove(shape);
         GameObject.Destroy(shape.gameObject);
 
-        Debug.Log("Added new platforms " + addedPlatformCoords);
+        if(Tray.Get().IsEmpty())
+        {
+            Tray.Get().ShowSkipButton();
+        }
     }
 
     public void OnDayTime()

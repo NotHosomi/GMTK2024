@@ -22,15 +22,16 @@ public class HighlightManager : MonoBehaviour
     List<GameObject> m_vInvalidHighlights = new List<GameObject>();
     List<GameObject> m_vIndicators = new List<GameObject>();
     float m_fTime;
-    const float mz_fTimeLimit = 1500f;
+    const float mz_fTimeLimit = 1.5f;
 
     public void Start()
     {
+        GameObject group = new GameObject();
         for(int i = 0; i < 10; ++i)
         {
-            m_vValidHighlights.Add(Instantiate(Resources.Load("Prefabs/ValidHighlight") as GameObject));
-            m_vInvalidHighlights.Add(Instantiate(Resources.Load("Prefabs/InvalidHighlight") as GameObject));
-            m_vIndicators.Add(Instantiate(Resources.Load("Prefabs/Indicator") as GameObject));
+            m_vValidHighlights.Add(Instantiate(Resources.Load("Prefabs/ValidHighlight") as GameObject, group.transform));
+            m_vInvalidHighlights.Add(Instantiate(Resources.Load("Prefabs/InvalidHighlight") as GameObject, group.transform));
+            m_vIndicators.Add(Instantiate(Resources.Load("Prefabs/Indicator") as GameObject, group.transform));
         }
         HideValidity();
         HidePreview();
@@ -111,7 +112,7 @@ public class HighlightManager : MonoBehaviour
     {
         if(m_fTime > 0)
         {
-            --m_fTime;
+            m_fTime -= Time.deltaTime;
             if(m_fTime < 0)
             {
                 m_fTime = 0;
