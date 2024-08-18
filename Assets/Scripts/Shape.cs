@@ -96,7 +96,7 @@ public class Shape : MonoBehaviour
         // remove the selected position from slots
         m_vOpenSlots.RemoveAt(offsetIdx);
         if (m_vOpenBaseSlots.Contains(selection)) { m_vOpenBaseSlots.Remove(selection); }
-        if (m_vOpenRoofSlots.Contains(selection)) { m_vOpenBaseSlots.Remove(selection); }
+        if (m_vOpenRoofSlots.Contains(selection)) { m_vOpenRoofSlots.Remove(selection); }
         return selection;
     }
 
@@ -108,6 +108,7 @@ public class Shape : MonoBehaviour
         newNeighbour = pos;
         newNeighbour.x += 1;
         if (!m_vBlockPositions.Contains(newNeighbour)) { m_vOpenSlots.Add(newNeighbour); }
+        newNeighbour = pos;
         newNeighbour.y += 1;
         if (!m_vBlockPositions.Contains(newNeighbour))
         {
@@ -214,15 +215,12 @@ public class Shape : MonoBehaviour
     {
         bool couldConnect = false;
         Vector2Int origin = Origin();
-        foreach (Vector2Int platformCoord in Tower.Get().GetPlatforms())
+        foreach(Vector2Int offset in m_vOpenBaseSlots)
         {
-            foreach (Vector2Int offset in m_vOpenBaseSlots)
+            if(Tower.Get().GetPlatforms().Contains(origin + offset))
             {
-                if (origin + offset == platformCoord)
-                {
-                    Debug.Log("Valid connection coord: " + platformCoord);
-                    couldConnect = true;
-                }
+                couldConnect = true;
+                break;
             }
         }
         return couldConnect;

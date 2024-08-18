@@ -23,7 +23,7 @@ public class Tower
     List<List<Block>> m_vRows = new List<List<Block>>();
     List<Vector2Int> m_vOpenPlatforms = new List<Vector2Int>();
 
-    int mz_nMaxWidth = 10;
+    int mz_nMaxWidth = 15;
 
     private Tower()
     {
@@ -89,6 +89,7 @@ public class Tower
 
     public void AttachToTower(Shape shape)
     {
+        List<Vector2Int> addedPlatformCoords = new List<Vector2Int>();
         Vector2Int shapeOrigin = shape.Origin();
         // expand the OpenPlatforms list
         foreach (Vector2Int roofSlot in shape.GetOpenRoofSlots())
@@ -98,6 +99,7 @@ public class Tower
             {
                 --newPlatform.y;
                 m_vOpenPlatforms.Add(newPlatform);
+                addedPlatformCoords.Add(newPlatform);
             }
 
         }
@@ -106,9 +108,15 @@ public class Tower
             Vector2Int coord = shapeOrigin + block.GetOffset();
             block.OnAddToTower(shapeOrigin);
             m_vRows[coord.y][coord.x] = block;
+
+            // remove any supporting blocks from the platforms list
+            coord.y -= 1;
+            m_vOpenPlatforms.Remove(coord);
         }
         Shape.ms_vShapes.Remove(shape);
         GameObject.Destroy(shape.gameObject);
+
+        Debug.Log("Added new platforms " + addedPlatformCoords);
     }
 
     public void OnDayTime()
