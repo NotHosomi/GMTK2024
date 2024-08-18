@@ -6,11 +6,6 @@ public class Crane : MonoBehaviour
 {
     [SerializeField] GameObject CraneTower;
     [SerializeField] GameObject CraneArm;
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
 
     // Update is called once per frame
     void Update()
@@ -25,9 +20,9 @@ public class Crane : MonoBehaviour
         {
             pos.x = 0f;
         }
-        if (pos.x > Tower.Get().GetMaxWidth())
+        if (pos.x > Tower.Get().GetMaxWidth()-0.1f)
         {
-            pos.x = Tower.Get().GetMaxWidth();
+            pos.x = Tower.Get().GetMaxWidth()-0.1f;
         }
         CraneArm.transform.position = pos;
     }
