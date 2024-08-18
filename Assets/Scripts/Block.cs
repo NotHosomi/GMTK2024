@@ -4,14 +4,27 @@ using UnityEngine;
 
 public class Block : MonoBehaviour
 {
+    static bool ms_bResourcesLoaded = false;
+    static Sprite[] ms_aSpritesWall;
+    static Sprite[] ms_aSpritesTop;
+    static Sprite[] ms_aSpritesSide;
+    static Sprite[] ms_aSpritesBottom;
+    static void LoadSprites()
+    {
+        ms_aSpritesWall = Resources.LoadAll<Sprite>("Sprites/wall");
+        ms_aSpritesTop = Resources.LoadAll<Sprite>("Sprites/top");
+        ms_aSpritesSide = Resources.LoadAll<Sprite>("Sprites/side");
+        ms_aSpritesBottom = Resources.LoadAll<Sprite>("Sprites/bottom");
+    }
 
     GameObject m_oInterior;
     Vector2Int m_tOffset;
     bool m_bHasOpenRoof;
     bool m_bHasOpenBase;
 
-    public static Block NewBlock(Transform tParent, Vector2Int tOffset, bool outline = true, string texture = "Sprites/ExampleWall")
+    public static Block NewBlock(Transform tParent, Vector2Int tOffset, bool outline = true)
     {
+        if(!ms_bResourcesLoaded) { LoadSprites(); }
         // set our gameobject pos
         GameObject obj = new GameObject();
         obj.name = "Wall";
@@ -24,7 +37,7 @@ public class Block : MonoBehaviour
 
         // create the wall sprite
         SpriteRenderer sr = obj.AddComponent<SpriteRenderer>();
-        Sprite sprite = Resources.Load<Sprite>(texture);
+        Sprite sprite = ms_aSpritesWall[Random.Range(0, ms_aSpritesWall.Length)];
         sr.sprite = sprite;
         sr.transform.position = obj.transform.position;
 
@@ -49,24 +62,41 @@ public class Block : MonoBehaviour
 
         return block;
     }
-    public static Block NewObstruction(Transform tParent, Vector2Int tOffset)
+    public enum E_ObstructionType
+    {
+        top, left, right, bottom, error
+    }
+
+    public static Block NewObstruction(Transform tParent, Vector2Int tOffset, E_ObstructionType type)
     {
         GameObject obj = new GameObject();
         obj.transform.parent = tParent;
         obj.transform.localPosition = new Vector3(tOffset.x, tOffset.y, 0);
 
         obj.AddComponent<BoxCollider2D>();
-        
+
         SpriteRenderer sr = obj.AddComponent<SpriteRenderer>();
-        Sprite sprite = Resources.Load<Sprite>("Sprites/TempObstruction");
+        Sprite sprite = LoadSprite(type);
         sr.sprite = sprite;
 
         Block block = obj.AddComponent<Block>();
         block.m_tOffset = tOffset;
 
+
         return block;
     }
 
+    static Sprite LoadSprite(E_ObstructionType type)
+    {
+        switch(type)
+        {
+            case E_ObstructionType.top: return ms_aSpritesTop[Random.Range(0, ms_aSpritesTop.Length)];
+            case E_ObstructionType.left:
+            case E_ObstructionType.right: return ms_aSpritesSide[Random.Range(0, ms_aSpritesSide.Length)];
+            case E_ObstructionType.bottom: return ms_aSpritesBottom[Random.Range(0, ms_aSpritesBottom.Length)];
+            default: return Resources.Load<Sprite>("Sprites/TempObstruction");
+        }
+    }
     public Vector2Int GetOffset()
     {
         return m_tOffset;

@@ -15,6 +15,8 @@ public class Shape : MonoBehaviour
     List<Vector2Int> m_vOpenSlots;
     List<Vector2Int> m_vOpenBaseSlots;
     List<Vector2Int> m_vOpenRoofSlots;
+    List<Vector2Int> m_vOpenLeftSlots;
+    List<Vector2Int> m_vOpenRightSlots;
 
     Vector3 m_tGrabDelta = new Vector3();
 
@@ -26,7 +28,7 @@ public class Shape : MonoBehaviour
         int yOffset = 0;
         // add the initial block
         m_vBlocks = new List<Block>();
-        m_vBlocks.Add(Block.NewBlock(transform, new Vector2Int(0, 0), true, "Sprites/Wall1"));
+        m_vBlocks.Add(Block.NewBlock(transform, new Vector2Int(0, 0), true));
         m_vOpenSlots = new List<Vector2Int>
         {
             new Vector2Int(1,0),
@@ -37,6 +39,8 @@ public class Shape : MonoBehaviour
         m_vBlockPositions = new List<Vector2Int> { new Vector2Int(0, 0) };
         m_vOpenBaseSlots = new List<Vector2Int> { new Vector2Int(0, -1) };
         m_vOpenRoofSlots = new List<Vector2Int> { new Vector2Int(0, 1) };
+        m_vOpenLeftSlots = new List<Vector2Int>();
+        m_vOpenRightSlots = new List<Vector2Int>();
         m_vObstructedSlots = new List<Vector2Int>();
 
         int blockCount = 1;
@@ -49,6 +53,7 @@ public class Shape : MonoBehaviour
         while (blockCount < maxBlocks)
         {
             Vector2Int selection = PickOpenSlot();
+            MarkSlotAsOccupied(selection);
             m_vBlockPositions.Add(selection);
             FindNewNeighbours(selection);
 
@@ -67,10 +72,25 @@ public class Shape : MonoBehaviour
         while(obstructionCount < maxObstructions)
         {
             Vector2Int selection = PickOpenSlot();
+            // check if this is the only available base slot
+            if(m_vOpenBaseSlots.Count == 1 && m_vOpenBaseSlots.Contains(selection))
+            {   // just don't bother with this one
+                Debug.Log("Aborted creating obstruction in only base slot");
+                continue;
+            }
+            MarkSlotAsOccupied(selection);
             m_vObstructedSlots.Add(selection);
-        
+
+            // pick obstruction type
+
             // instantiate the block
-            m_vBlocks.Add(Block.NewObstruction(transform, selection));
+            Block.E_ObstructionType obType = PickObstructionType(selection);
+            if(obType == Block.E_ObstructionType.error)
+            {
+                Debug.Log("err obstruction type");
+                continue;
+            }
+            m_vBlocks.Add(Block.NewObstruction(transform, selection, obType));
             ++obstructionCount;
         
             // check if the shape's initial location needs to be raised
@@ -92,22 +112,33 @@ public class Shape : MonoBehaviour
         // pick where to place the new block
         int offsetIdx = Random.Range(0, m_vOpenSlots.Count);
         Vector2Int selection = m_vOpenSlots[offsetIdx];
-
-        // remove the selected position from slots
-        m_vOpenSlots.RemoveAt(offsetIdx);
-        if (m_vOpenBaseSlots.Contains(selection)) { m_vOpenBaseSlots.Remove(selection); }
-        if (m_vOpenRoofSlots.Contains(selection)) { m_vOpenRoofSlots.Remove(selection); }
         return selection;
     }
-
+    void MarkSlotAsOccupied(Vector2Int tOffset)
+    {
+        // remove the selected position from slots
+        m_vOpenSlots.Remove(tOffset);
+        m_vOpenBaseSlots.Remove(tOffset);
+        m_vOpenRoofSlots.Remove(tOffset);
+        m_vOpenLeftSlots.Remove(tOffset);
+        m_vOpenRightSlots.Remove(tOffset);
+    }
     void FindNewNeighbours(Vector2Int pos)
     {
         Vector2Int newNeighbour = pos;
         newNeighbour.x -= 1;
-        if (!m_vBlockPositions.Contains(newNeighbour)) { m_vOpenSlots.Add(newNeighbour); }
+        if (!m_vBlockPositions.Contains(newNeighbour))
+        {
+            m_vOpenSlots.Add(newNeighbour);
+            m_vOpenLeftSlots.Add(newNeighbour);
+        }
         newNeighbour = pos;
         newNeighbour.x += 1;
-        if (!m_vBlockPositions.Contains(newNeighbour)) { m_vOpenSlots.Add(newNeighbour); }
+        if (!m_vBlockPositions.Contains(newNeighbour))
+        {
+            m_vOpenSlots.Add(newNeighbour);
+            m_vOpenRightSlots.Add(newNeighbour);
+        }
         newNeighbour = pos;
         newNeighbour.y += 1;
         if (!m_vBlockPositions.Contains(newNeighbour))
@@ -121,6 +152,22 @@ public class Shape : MonoBehaviour
         {
             m_vOpenSlots.Add(newNeighbour);
             m_vOpenBaseSlots.Add(newNeighbour);
+        }
+    }
+    Block.E_ObstructionType PickObstructionType(Vector2Int tOffset)
+    {
+        List<Block.E_ObstructionType> validType = new List<Block.E_ObstructionType>();
+        if (m_vOpenLeftSlots.Contains(tOffset)) { validType.Add(Block.E_ObstructionType.left); }
+        if (m_vOpenRightSlots.Contains(tOffset)) { validType.Add(Block.E_ObstructionType.right); }
+        if (m_vOpenRoofSlots.Contains(tOffset)) { validType.Add(Block.E_ObstructionType.top); }
+        if (m_vOpenBaseSlots.Contains(tOffset)) { validType.Add(Block.E_ObstructionType.bottom); }
+        if(validType.Count == 0)
+        {
+            return Block.E_ObstructionType.error;
+        }
+        else
+        {
+            return validType[Random.Range(0, validType.Count)];
         }
     }
 
