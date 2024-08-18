@@ -23,12 +23,13 @@ public class Tower
     List<List<Block>> m_vRows = new List<List<Block>>();
     List<Vector2Int> m_vOpenPlatforms = new List<Vector2Int>();
 
-    int mz_nMaxWidth = 15;
+
+    int mz_nMaxWidth = 12;
 
     private Tower()
     {
         List<Block> row = AppendRow();
-        for (int x = 0; x < 5; ++x)
+        for (int x = 3; x < 9; ++x)
         {
             Block b = Block.NewBlock(null, new Vector2Int(x, 0), false);
             row[x] = b;
@@ -103,6 +104,20 @@ public class Tower
             }
 
         }
+        // sum neighbours
+        foreach (Vector2Int offset in shape.GetWallOffsets())
+        {
+            int score = 0;
+            Vector2Int coord = offset + shapeOrigin;
+            if (IsWall(GetBlock(new Vector2Int(coord.x + 1, coord.y)))) { ++score; }
+            if (IsWall(GetBlock(new Vector2Int(coord.x - 1, coord.y)))) { ++score; }
+            if (IsWall(GetBlock(new Vector2Int(coord.x, coord.y + 1)))) { ++score; }
+            if (IsWall(GetBlock(new Vector2Int(coord.x, coord.y - 1)))) { ++score; }
+            if (score == 3) { score = 4; }
+            GameManager.Get().AddScore(score, coord);
+            
+        }
+        // insert blocks into 
         foreach (Block block in shape.GetBlocks())
         {
             Vector2Int coord = shapeOrigin + block.GetOffset();
@@ -127,7 +142,7 @@ public class Tower
             {
                 if(block!=null)
                 {
-                    block.SetInteriorColour(new Color(0,1,1));
+                    block.UpdateInterior();
                 }
             }
         }
@@ -145,7 +160,7 @@ public class Tower
             {
                 if(block!=null)
                 {
-                    block.SetInteriorColour(new Color(1,0.73f,0));
+                    block.UpdateInterior();
                 }
             }
         }
@@ -166,5 +181,32 @@ public class Tower
             return false;
         }
         return m_vRows[coord.y][coord.x] == null;
+    }
+
+    public int GetHeight()
+    {
+        return m_vRows.Count;
+    }
+
+    public Block GetBlock(Vector2Int coord)
+    {
+        if (coord.y >= m_vRows.Count || coord.x < 0 || coord.y < 0 || coord.x >= mz_nMaxWidth)
+        {
+            return null;
+        }
+        return m_vRows[coord.y][coord.x];
+    }
+    public bool IsWall(Block block)
+    {
+        if(block == null)
+        {
+            return false;
+        }
+        return !block.IsObstruction();
+    }
+
+    public int GetMaxWidth()
+    {
+        return mz_nMaxWidth;
     }
 }

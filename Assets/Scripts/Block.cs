@@ -11,16 +11,23 @@ public class Block : MonoBehaviour
     static Sprite[] ms_aSpritesBottom;
     static void LoadSprites()
     {
-        ms_aSpritesWall = Resources.LoadAll<Sprite>("Sprites/wall");
+        ms_aSpritesWall = Resources.LoadAll<Sprite>("Sprites/walls");
         ms_aSpritesTop = Resources.LoadAll<Sprite>("Sprites/top");
         ms_aSpritesSide = Resources.LoadAll<Sprite>("Sprites/side");
         ms_aSpritesBottom = Resources.LoadAll<Sprite>("Sprites/bottom");
     }
 
+    public static Color ms_DayWindow = new Color(0, 0, 0, 0.5f);//new Color(0, 1, 1);
+    //public static Color ms_Hole = new Color(0, 0, 0, 0.5f);
+    public static Color ms_NightWindow = new Color(1, 0.73f, 0);
+
     GameObject m_oInterior;
     Vector2Int m_tOffset;
     bool m_bHasOpenRoof;
     bool m_bHasOpenBase;
+
+    bool m_bIsObstruction = false;
+    bool m_bIsHole = false;
 
     public static Block NewBlock(Transform tParent, Vector2Int tOffset, bool outline = true)
     {
@@ -45,7 +52,7 @@ public class Block : MonoBehaviour
         block.m_oInterior = new GameObject();
         block.m_oInterior.name = "Interior";
         block.m_oInterior.transform.parent = obj.transform;
-        block.m_oInterior.transform.localPosition = new Vector3(0,0,2);
+        block.m_oInterior.transform.localPosition = new Vector3(0,0,0.1f);
         if(outline)
         {
             block.m_oInterior.transform.localScale *= 1.1f;
@@ -78,9 +85,14 @@ public class Block : MonoBehaviour
         SpriteRenderer sr = obj.AddComponent<SpriteRenderer>();
         Sprite sprite = LoadSprite(type);
         sr.sprite = sprite;
+        if(type == E_ObstructionType.left)
+        {
+            sr.flipX = true;
+        }
 
         Block block = obj.AddComponent<Block>();
         block.m_tOffset = tOffset;
+        block.m_bIsObstruction = true;
 
 
         return block;
@@ -97,19 +109,8 @@ public class Block : MonoBehaviour
             default: return Resources.Load<Sprite>("Sprites/TempObstruction");
         }
     }
-    public Vector2Int GetOffset()
-    {
-        return m_tOffset;
-    }
-
-    public void SetInteriorColour(Color newCol)
-    {
-        if(m_oInterior != null)
-        {
-            m_oInterior.GetComponent<SpriteRenderer>().color = newCol;
-        }
-    }
-
+    public bool IsObstruction() { return m_bIsObstruction; }
+    public Vector2Int GetOffset() { return m_tOffset; }
     public void SetOpenRoof(bool open) { m_bHasOpenRoof = open; }
     public void SetOpenBase(bool open) { m_bHasOpenBase = open; }
     public bool GetOpenRoof() { return m_bHasOpenRoof; }
@@ -125,9 +126,25 @@ public class Block : MonoBehaviour
         transform.position = pos;
         if (m_oInterior != null)
         {
-            SetInteriorColour(new Color(0, 1, 1, 1));
+            UpdateInterior();
             m_oInterior.transform.localScale = new Vector3(1,1,1);
         }
         m_tOffset = new Vector2Int(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
+    }
+
+    public void UpdateInterior()
+    {
+        if (m_oInterior == null)
+        {
+            return;
+        }
+        if (GameManager.Get().IsNight())
+        {
+            m_oInterior.GetComponent<SpriteRenderer>().color = ms_NightWindow;
+        }
+        else
+        {
+            m_oInterior.GetComponent<SpriteRenderer>().color = ms_DayWindow;
+        }
     }
 }

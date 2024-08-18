@@ -21,9 +21,13 @@ public class Crane : MonoBehaviour
 
         pos = CraneArm.transform.position;
         pos.x = Camera.main.ScreenToWorldPoint(Input.mousePosition).x;
-        if(pos.x < 1.5)
+        if (pos.x < 0)
         {
-            pos.x = 1.5f;
+            pos.x = 0f;
+        }
+        if (pos.x > Tower.Get().GetMaxWidth())
+        {
+            pos.x = Tower.Get().GetMaxWidth();
         }
         CraneArm.transform.position = pos;
     }

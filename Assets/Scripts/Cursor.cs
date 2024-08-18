@@ -27,7 +27,7 @@ public class Cursor : MonoBehaviour
             if(m_oHeldShape == null)
             {
                 RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                if(hit.collider != null)
+                if(hit.collider != null && hit.collider.transform.parent != null)
                 {
                     m_oHeldShape = hit.collider.transform.parent.GetComponent<Shape>();
                     if (m_oHeldShape != null)
@@ -38,17 +38,23 @@ public class Cursor : MonoBehaviour
             }
             else
             {
-                m_oHeldShape.Release();
-                m_oHeldShape = null;
+                if(m_oHeldShape.Release())
+                {
+                    m_oHeldShape = null;
+                }
             }
         }
         if(Input.GetMouseButtonDown(2))
         {
-            GameObject obj = new GameObject();
-            Vector3 tMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            tMousePos.z = 0;
-            obj.transform.position = tMousePos;
-            obj.AddComponent<Shape>();
+            if(!Tray.Get().IsFull())
+            {
+                new GameObject().AddComponent<Shape>();
+            }
         }
+    }
+
+    public Shape GetHeldShape()
+    {
+        return m_oHeldShape;
     }
 }

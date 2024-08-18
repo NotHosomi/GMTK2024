@@ -9,7 +9,7 @@ public class Shape : MonoBehaviour
     bool m_bHeld = false;
     List<Block> m_vBlocks;
 
-    List<Vector2Int> m_vBlockPositions;
+    List<Vector2Int> m_vWallPositions;
     List<Vector2Int> m_vObstructedSlots;
 
     List<Vector2Int> m_vOpenSlots;
@@ -21,11 +21,12 @@ public class Shape : MonoBehaviour
     Vector3 m_tGrabDelta = new Vector3();
 
     bool m_bCouldAttach = false;
+    static int ms_nTrayCount = 0;
 
     void Awake()
     {
         ms_vShapes.Add(this);
-        int yOffset = 0;
+
         // add the initial block
         m_vBlocks = new List<Block>();
         m_vBlocks.Add(Block.NewBlock(transform, new Vector2Int(0, 0), true));
@@ -36,40 +37,31 @@ public class Shape : MonoBehaviour
             new Vector2Int(0,1),
             new Vector2Int(0,-1),
         };
-        m_vBlockPositions = new List<Vector2Int> { new Vector2Int(0, 0) };
+        m_vWallPositions = new List<Vector2Int> { new Vector2Int(0, 0) };
         m_vOpenBaseSlots = new List<Vector2Int> { new Vector2Int(0, -1) };
         m_vOpenRoofSlots = new List<Vector2Int> { new Vector2Int(0, 1) };
         m_vOpenLeftSlots = new List<Vector2Int>();
         m_vOpenRightSlots = new List<Vector2Int>();
         m_vObstructedSlots = new List<Vector2Int>();
 
-        int blockCount = 1;
-        int obstructionCount = 0;
         int maxBlocks = Random.Range(2, 5); // create 1 to 4 additional blocks
         int maxObstructions = Random.Range(0, maxBlocks); 
         Debug.Log("Generating shape with " + maxBlocks + " blocks and " + maxObstructions + " obstructions");
 
         // create blocks
-        while (blockCount < maxBlocks)
+        for (int i = 1;  i < maxBlocks; ++i)
         {
             Vector2Int selection = PickOpenSlot();
             MarkSlotAsOccupied(selection);
-            m_vBlockPositions.Add(selection);
+            m_vWallPositions.Add(selection);
             FindNewNeighbours(selection);
 
             // instantiate the block
             m_vBlocks.Add(Block.NewBlock(transform, selection));
-            ++blockCount;
-
-            // check if the shape's initial location needs to be raised
-            if(selection.y < yOffset)
-            {
-                yOffset = selection.y;
-            }
         }
 
         // create obstructions
-        while(obstructionCount < maxObstructions)
+        for(int i = 0; i < maxObstructions; ++i)
         {
             Vector2Int selection = PickOpenSlot();
             // check if this is the only available base slot
@@ -78,33 +70,15 @@ public class Shape : MonoBehaviour
                 Debug.Log("Aborted creating obstruction in only base slot");
                 continue;
             }
+            Block.E_ObstructionType obType = PickObstructionType(selection);
             MarkSlotAsOccupied(selection);
             m_vObstructedSlots.Add(selection);
 
-            // pick obstruction type
-
             // instantiate the block
-            Block.E_ObstructionType obType = PickObstructionType(selection);
-            if(obType == Block.E_ObstructionType.error)
-            {
-                Debug.Log("err obstruction type");
-                continue;
-            }
             m_vBlocks.Add(Block.NewObstruction(transform, selection, obType));
-            ++obstructionCount;
-        
-            // check if the shape's initial location needs to be raised
-            if (selection.y < yOffset)
-            {
-                yOffset = selection.y;
-            }
         }
 
-        // set the initial pos of all 
-        Vector3 pos = transform.position;
-        pos.y -= yOffset;
-        pos.z = -5;
-        transform.position = pos;
+        Tray.Get().Add(this);
     }
 
     Vector2Int PickOpenSlot()
@@ -127,28 +101,28 @@ public class Shape : MonoBehaviour
     {
         Vector2Int newNeighbour = pos;
         newNeighbour.x -= 1;
-        if (!m_vBlockPositions.Contains(newNeighbour))
+        if (!m_vWallPositions.Contains(newNeighbour))
         {
             m_vOpenSlots.Add(newNeighbour);
             m_vOpenLeftSlots.Add(newNeighbour);
         }
         newNeighbour = pos;
         newNeighbour.x += 1;
-        if (!m_vBlockPositions.Contains(newNeighbour))
+        if (!m_vWallPositions.Contains(newNeighbour))
         {
             m_vOpenSlots.Add(newNeighbour);
             m_vOpenRightSlots.Add(newNeighbour);
         }
         newNeighbour = pos;
         newNeighbour.y += 1;
-        if (!m_vBlockPositions.Contains(newNeighbour))
+        if (!m_vWallPositions.Contains(newNeighbour))
         {
             m_vOpenSlots.Add(newNeighbour);
             m_vOpenRoofSlots.Add(newNeighbour);
         }
         newNeighbour = pos;
         newNeighbour.y -= 1;
-        if (!m_vBlockPositions.Contains(newNeighbour))
+        if (!m_vWallPositions.Contains(newNeighbour))
         {
             m_vOpenSlots.Add(newNeighbour);
             m_vOpenBaseSlots.Add(newNeighbour);
@@ -178,10 +152,6 @@ public class Shape : MonoBehaviour
         {
             HeldUpdate();
         }
-        else
-        {
-            NotHeldUpdate();
-        }
     }
 
     void HeldUpdate()
@@ -194,7 +164,7 @@ public class Shape : MonoBehaviour
         m_bCouldAttach = HasPotentialConnection();
         if (m_bCouldAttach)
         {
-            HighlightManager.Get().DrawPreview(Origin(), m_vBlockPositions);
+            HighlightManager.Get().DrawPreview(Origin(), m_vWallPositions);
         }
         else
         {
@@ -202,13 +172,13 @@ public class Shape : MonoBehaviour
         }
     }
 
-    void NotHeldUpdate()
-    {
-    }
-
     public List<Vector2Int> GetFootprint()
     {
-        return m_vBlockPositions.Union(m_vObstructedSlots).ToList();
+        return m_vWallPositions.Union(m_vObstructedSlots).ToList();
+    }
+    public List<Vector2Int> GetWallOffsets()
+    {
+        return m_vWallPositions;
     }
 
     public List<Block> GetBlocks()
@@ -224,11 +194,8 @@ public class Shape : MonoBehaviour
     public void Grab()
     {
         m_bHeld = true;
-        
-        // have the object jump up when grabbed
-        Vector3 pos = transform.position; 
-        pos.y += 0.1f;
-        transform.position = pos;
+        transform.parent = null;
+        Tray.Get().Remove(this);
 
         // set the grab delta
         Vector3 tMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -236,27 +203,16 @@ public class Shape : MonoBehaviour
         m_tGrabDelta = transform.position - tMousePos;
     }
 
-    public void Release()
+    public bool Release()
     {
         // check if we can snap now?
-        if (m_bCouldAttach && TryAttach())
+        if (m_bCouldAttach)
         {
-            return;
+            return TryAttach();
         }
-        else
-        {
-            m_bHeld = false;
-            Vector3 pos = transform.position;
-            pos.x = 9;
-            foreach(Vector2Int offset in m_vBlockPositions)
-            {
-                if (offset.y < -pos.y)
-                {
-                    pos.y = -offset.y;
-                }
-            }
-            transform.position = pos;
-        }
+        m_bHeld = false;
+        Tray.Get().Add(this);
+        return true;
     }
     public bool HasPotentialConnection()
     {
@@ -274,19 +230,88 @@ public class Shape : MonoBehaviour
     }
     bool TryAttach()
     {
-        Debug.Log("Trying to attach shape to tower");
-
         if (Tower.Get().CheckValidity(this))
         {
             Tower.Get().AttachToTower(this);
             return true;
         }
-
-        return true;
+        return false;
     }
 
     public Vector2Int Origin()
     {
         return new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
+    }
+
+    // returns the vector from the shape's origin to its center
+    public Vector2 GetCenterDelta(bool includeObstructions)
+    {
+        Vector2 mins = GetMins(includeObstructions);
+        Vector2 maxs = GetMaxs(includeObstructions);
+        maxs.x += 0.5f;
+        maxs.y += 0.5f;
+        mins.x -= 0.5f;
+        mins.y -= 0.5f;
+        return (maxs - mins) / 2 + mins;
+    }
+    public Vector2Int GetMins(bool includeObstructions)
+    {
+        Vector2Int min = new Vector2Int();
+        foreach (Vector2Int offset in m_vWallPositions)
+        {
+            if (offset.x < min.x)
+            {
+                min.x = offset.x;
+            }
+            if (offset.y < min.y)
+            {
+                min.y = offset.y;
+            }
+        }
+        if (includeObstructions)
+        {
+            foreach (Vector2Int offset in m_vObstructedSlots)
+            {
+                if (offset.x < min.x)
+                {
+                    min.x = offset.x;
+                }
+                if (offset.y < min.y)
+                {
+                    min.y = offset.y;
+                }
+            }
+        }
+        return min;
+    }
+    public Vector2Int GetMaxs(bool includeObstructions)
+    {
+        Vector2Int max = new Vector2Int();
+        foreach (Vector2Int offset in m_vWallPositions)
+        {
+            if (offset.x > max.x)
+            {
+                max.x = offset.x;
+            }
+            if (offset.y > max.y)
+            {
+                max.y = offset.y;
+            }
+        }
+        if (includeObstructions)
+        {
+            foreach (Vector2Int offset in m_vObstructedSlots)
+            {
+                if (offset.x > max.x)
+                {
+                    max.x = offset.x;
+                }
+                if (offset.y > max.y)
+                {
+                    max.y = offset.y;
+                }
+            }
+        }
+        return max;
     }
 }
