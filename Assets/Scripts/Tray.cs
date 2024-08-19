@@ -15,14 +15,14 @@ public class Tray : MonoBehaviour
     {
         if (instance != null)
         {
-            Debug.LogError("Duplicate Cursor!!!");
+            Debug.LogError("Duplicate Tray!!!");
         }
         else
         {
             instance = this;
         }
 
-        for (int i = 0; i < 5; ++i)
+        for (int i = 0; i < 4; ++i)
         {
             m_vShapes.Add(null);
         }
@@ -50,7 +50,6 @@ public class Tray : MonoBehaviour
         pos.y = -(center.y / 2) + slotPos.y;
         pos.x = -(center.x / 2) + slotPos.x;
         pos.z = -0.5f;
-        Debug.Log("Center offset: " + center + "\t pos: " + pos.x + " " + pos.y);
         shape.transform.localPosition = pos;
         shape.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
 
@@ -67,6 +66,7 @@ public class Tray : MonoBehaviour
         if(i == m_vShapes.Count)
         {
             Debug.Log("Could not find shape in tray");
+            return;
         }
         m_vShapes[i] = null;
         shape.transform.localScale = new Vector3(1, 1, 1);
@@ -95,10 +95,11 @@ public class Tray : MonoBehaviour
         return true;
     }
 
-    // returns true if any slots are still in play
-    public bool Refill()
+    // returns the number of slots refilled
+    public int Refill()
     {
         int nSlotsToFill = 0;
+        bool bAnyLocked = false;
         for (int i = 0; i < m_vShapes.Count; ++i)
         {
             if (m_vShapes[i] == null)
@@ -113,32 +114,30 @@ public class Tray : MonoBehaviour
                     Vector2 pos = SlotPos(i);
                     lockMarker.transform.localPosition = new Vector3(pos.x, pos.y, -1);
                     lockMarker.transform.localScale = new Vector3(2, 2, 2);
+                    bAnyLocked = true;
                 }
             }
         }
-        StartCoroutine(SpawnShapes(nSlotsToFill));
-        return nSlotsToFill == 0;
+        if(bAnyLocked) { SoundManager.Get().PlaySound(SoundManager.E_Sfx.womp); }
+        if (nSlotsToFill > 0) { StartCoroutine(SpawnShapes(nSlotsToFill)); }
+        return nSlotsToFill;
     }
 
     public IEnumerator SpawnShapes(int n)
     {
-        Debug.Log("Started coroutine SpawnPieces(" + n + ")");
+        //Debug.Log("Started coroutine SpawnPieces(" + n + ")");
         for (int i = 0; i < n; ++i)
         {
             yield return new WaitForSeconds(0.5f);
             new GameObject().AddComponent<Shape>();
+            SoundManager.Get().PlaySound(SoundManager.E_Sfx.pop);
         }
     }
 
     Vector2 SlotPos(int i)
     {
         return new Vector2(
-            (i % 2 - 0.5f) * 1.25f,
-            (2f - i) * 1.25f);
-    }
-
-    public void ShowSkipButton()
-    {
-        mz_oSkipButton.SetActive(true);
+            (i % 2 - 0.5f) * 1.2f,
+            2.25f - i * 1.5f);
     }
 }

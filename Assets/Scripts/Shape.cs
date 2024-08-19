@@ -5,7 +5,6 @@ using System.Linq;
 
 public class Shape : MonoBehaviour
 {
-    public static List<Shape> ms_vShapes = new List<Shape>();
     bool m_bHeld = false;
     List<Block> m_vBlocks;
 
@@ -25,8 +24,6 @@ public class Shape : MonoBehaviour
 
     void Awake()
     {
-        ms_vShapes.Add(this);
-
         // add the initial block
         m_vBlocks = new List<Block>();
         m_vBlocks.Add(Block.NewBlock(transform, new Vector2Int(0, 0), true));
@@ -44,9 +41,9 @@ public class Shape : MonoBehaviour
         m_vOpenRightSlots = new List<Vector2Int>();
         m_vObstructedSlots = new List<Vector2Int>();
 
-        int maxBlocks = Random.Range(2, 5); // create 1 to 4 additional blocks
-        int maxObstructions = Random.Range(0, maxBlocks); 
-        Debug.Log("Generating shape with " + maxBlocks + " blocks and " + maxObstructions + " obstructions");
+        int maxBlocks = Random.Range(2, 6); // create 1 to 4 additional blocks
+        int maxObstructions = Random.Range(0, maxBlocks+2); 
+        //Debug.Log("Generating shape with " + maxBlocks + " blocks and " + maxObstructions + " obstructions");
 
         // create blocks
         for (int i = 1;  i < maxBlocks; ++i)
@@ -71,6 +68,11 @@ public class Shape : MonoBehaviour
                 continue;
             }
             Block.E_ObstructionType obType = PickObstructionType(selection);
+            if(obType == Block.E_ObstructionType.error)
+            {
+                // something went wrong
+                continue;
+            }
             MarkSlotAsOccupied(selection);
             m_vObstructedSlots.Add(selection);
 
@@ -346,5 +348,10 @@ public class Shape : MonoBehaviour
     public bool IsLocked()
     {
         return m_bLocked;
+    }
+
+    public Vector2 GetGrabDelta()
+    {
+        return m_tGrabDelta;
     }
 }

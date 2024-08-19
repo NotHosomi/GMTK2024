@@ -42,11 +42,11 @@ public class HighlightManager : MonoBehaviour
         m_fTime = mz_fTimeLimit;
         while (m_vValid.Count >= m_vValidHighlights.Count)
         {
-            m_vValidHighlights.Add(GameObject.Instantiate(Resources.Load("Sprites/ValidHighlight") as GameObject));
+            m_vValidHighlights.Add(GameObject.Instantiate(Resources.Load("Prefabs/ValidHighlight") as GameObject));
         }
         while (m_vInvalid.Count > m_vInvalidHighlights.Count)
         {
-            m_vValidHighlights.Add(GameObject.Instantiate(Resources.Load("Sprites/InvalidHighlight") as GameObject));
+            m_vValidHighlights.Add(GameObject.Instantiate(Resources.Load("Prefabs/InvalidHighlight") as GameObject));
         }
         int i = 0;
         for (; i < m_vValid.Count; ++i)
@@ -64,7 +64,7 @@ public class HighlightManager : MonoBehaviour
             m_vInvalidHighlights[i].transform.position = new Vector3(m_vInvalid[i].x, m_vInvalid[i].y, -7);
             m_vInvalidHighlights[i].SetActive(true);
         }
-        for (; i < m_vValidHighlights.Count; ++i)
+        for (; i < m_vInvalidHighlights.Count; ++i)
         {
             m_vInvalidHighlights[i].SetActive(false);
         }

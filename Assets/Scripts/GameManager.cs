@@ -5,18 +5,23 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
+    [SerializeField] bool m_bIsFreeplay = false;
+    bool m_bLost = false;
+
     [SerializeField] GameObject scoreDisplay;
     [SerializeField] GameObject dayDisplay;
     [SerializeField] GameObject dayProgressBar;
+    [SerializeField] GameObject lossBanner;
 
     [SerializeField] Gradient tDaySky;
     [SerializeField] Gradient tNightSky;
     static GameManager instance;
     public static GameManager Get() { return instance; }
 
-    [SerializeField] float m_fDayLengthSecs;
-    [SerializeField] float m_fNightLengthSecs;
-    [SerializeField] float m_fPhaseTime = 0;
+    float m_fDayLengthSecs;
+    float m_fNightLengthSecs;
+    float m_fPhaseTime = 0;
+    float m_fTimeScale = 1;
 
     int m_nScore = 0;
     int m_nCycles = 0;
@@ -39,7 +44,23 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
         }
+        if(m_bIsFreeplay)
+        {
+            m_fDayLengthSecs = 30;
+            m_fNightLengthSecs = 30;
+        }
+        else
+        {
+            m_fDayLengthSecs = 30;
+            m_fNightLengthSecs = 5;
+        }
+
         Tower.Init();
+        SoundManager.Get().SetTense(false);
+        if(m_bIsFreeplay)
+        {
+            dayProgressBar.transform.parent.gameObject.SetActive(false);
+        }
     }
 
     private void Start()
@@ -49,7 +70,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        m_fPhaseTime += Time.deltaTime;
+        m_fPhaseTime += Time.deltaTime * m_fTimeScale;
         switch(m_ePhase)
         {
             case E_Phase.day: Day();
@@ -84,28 +105,54 @@ public class GameManager : MonoBehaviour
     {
         m_fPhaseTime = 0;
         m_ePhase = E_Phase.day;
-        Tower.Get().OnDayTime();
         ++m_nCycles;
-        dayDisplay.GetComponent<TextMeshPro>().text = (m_nCycles+1).ToString();
+        dayDisplay.GetComponent<TextMeshPro>().text = (m_nCycles + 1).ToString();
+        Tower.Get().OnDayTime();
+        SoundManager.Get().OnDay();
+        if(Tray.Get().IsEmpty())
+        {
+            SetSpeedup(true);
+        }
     }
 
     void BecomeNight()
     {
         dayProgressBar.transform.localScale = new Vector3(0, 1, 1);
-
         m_fPhaseTime = 0;
         m_ePhase = E_Phase.night;
+        SetSpeedup(false);
         Tower.Get().OnNightTime();
+        SoundManager.Get().OnNight();
 
-        Shape shape = Cursor.Get().GetHeldShape();
-        Cursor.Get().ForgetHeldShape();
-        HighlightManager.Get().HidePreview();
-        HighlightManager.Get().HideValidity();
-        if (shape != null)
+        if (!m_bIsFreeplay)
         {
-            shape.ReturnToTray();
+            // hasten the clock
+            m_fDayLengthSecs -= 2;
+            if(m_fDayLengthSecs < 5)
+            {
+                m_fDayLengthSecs = 5;
+                SoundManager.Get().SetTense(true);
+            }
+
+            // handle the tray
+            Shape shape = Cursor.Get().GetHeldShape();
+            Cursor.Get().ForgetHeldShape();
+            HighlightManager.Get().HidePreview();
+            HighlightManager.Get().HideValidity();
+            if (shape != null)
+            {
+                shape.ReturnToTray();
+            }
+            int nSlots = Tray.Get().Refill();
+            if (nSlots == 0)
+            {
+                Loss();
+            }
+            else
+            {
+                m_fNightLengthSecs = nSlots;
+            }
         }
-        Tray.Get().Refill();
     }
 
     public bool IsNight()
@@ -119,7 +166,7 @@ public class GameManager : MonoBehaviour
         {
             return false;
         }
-        m_fPhaseTime = m_fDayLengthSecs - 2;
+        m_fPhaseTime = m_fDayLengthSecs;
         return true;
     }
 
@@ -137,5 +184,45 @@ public class GameManager : MonoBehaviour
     {
         m_nScore += amount;
         scoreDisplay.GetComponent<TextMeshPro>().text = "<b>" + m_nScore.ToString() + "</b>";
+    }
+
+    public bool IsFreeplay()
+    {
+        return m_bIsFreeplay;
+    }
+
+    public void Loss()
+    {
+        if(m_bLost)
+        {
+            return;
+        }
+        m_bLost = true;
+        m_fNightLengthSecs = 15;
+        m_fDayLengthSecs = 15;
+        lossBanner.SetActive(true);
+        StartCoroutine(LowerLossBanner());
+        GetComponent<Crane>().SetLocked(true);
+        SoundManager.Get().SetTense(false);
+        GetComponent<CameraController>().OnLose();
+    }
+    IEnumerator LowerLossBanner()
+    {
+        Vector3 pos = lossBanner.transform.localPosition;
+        while(pos.y > 3.5)
+        {
+            pos.y -= Time.deltaTime;
+            lossBanner.transform.localPosition = pos;
+            yield return new WaitForEndOfFrame();
+        }
+    }
+    public void SetSpeedup(bool fast)
+    {
+        if(m_bLost)
+        {
+            m_fTimeScale = 1;
+            return;
+        }
+        m_fTimeScale = fast ? 4 : 1;
     }
 }

@@ -9,6 +9,8 @@ public class CameraController : MonoBehaviour
     float speed = 20;
     float yLimLower = 3;
     bool m_bLockMoveDown = false;
+    bool m_bZooming = false;
+    float m_fZoomSpeed = 100;
 
     void Start()
     {
@@ -20,14 +22,25 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         Vector3 pos = rTransform.position;
+        if(m_bZooming)
+        {
+            pos.y += m_fZoomSpeed * Time.deltaTime;
+            if(pos.y > Tower.Get().GetHeight())
+            {
+                pos.y = Tower.Get().GetHeight();
+                m_bZooming = false;
+            }
+            rTransform.position = pos;
+            return;
+        }
         if (m_bLockMoveDown)
         {
-            pos.y -= speed * Time.deltaTime * 2;
+            pos.y -= speed * Time.deltaTime / 2;
             if (pos.y < yLimLower)
             {
                 pos.y = yLimLower;
             }
-            transform.position = pos;
+            rTransform.position = pos;
             return;
         }
 
@@ -38,14 +51,13 @@ public class CameraController : MonoBehaviour
         Shape heldShape = Cursor.Get().GetHeldShape();
         if(heldShape != null)
         {
-            extraHeight += heldShape.GetMaxs(true).y;
-            extraDepth += heldShape.GetMins(true).y;
+            extraHeight += heldShape.GetMaxs(true).y + heldShape.GetGrabDelta().y;
+            extraDepth += heldShape.GetMins(true).y + heldShape.GetGrabDelta().y;
         }
 
         if(Input.GetKeyDown(KeyCode.Space))
         {
-            pos.y = Tower.Get().GetHeight() + 4;
-            rTransform.position = pos;
+            JumpToTop();
             return;
         }
 
@@ -85,8 +97,15 @@ public class CameraController : MonoBehaviour
         rTransform.position = pos;
     }
 
+    public void JumpToTop()
+    {
+        m_bZooming = true;
+    }    
+
     public void OnLose()
     {
-
+        m_fZoomSpeed = speed / 2;
+        JumpToTop();
+        m_bLockMoveDown = true;
     }
 }

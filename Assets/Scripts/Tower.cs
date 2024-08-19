@@ -128,12 +128,19 @@ public class Tower
             coord.y -= 1;
             m_vOpenPlatforms.Remove(coord);
         }
-        Shape.ms_vShapes.Remove(shape);
         GameObject.Destroy(shape.gameObject);
+        SoundManager.Get().PlaySound(SoundManager.E_Sfx.click);
 
         if(Tray.Get().IsEmpty())
         {
-            Tray.Get().ShowSkipButton();
+            if(GameManager.Get().IsFreeplay())
+            {
+                Tray.Get().Refill();
+            }
+            else
+            {
+                GameManager.Get().SetSpeedup(true);
+            }
         }
     }
 
@@ -152,11 +159,6 @@ public class Tower
     }
     public void OnNightTime()
     {
-        if(Shape.ms_vShapes.Count > 0)
-        {
-            // todo: loss screen
-            Debug.Log("Loss");
-        }
         foreach(List<Block> row in m_vRows)
         {
             foreach (Block block in row)
