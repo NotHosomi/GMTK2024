@@ -8,6 +8,7 @@ public class CameraController : MonoBehaviour
     Transform rTransform;
     float speed = 20;
     float yLimLower = 3;
+    bool m_bLockMoveDown = false;
 
     void Start()
     {
@@ -18,8 +19,19 @@ public class CameraController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3 pos = rTransform.position;
+        if (m_bLockMoveDown)
+        {
+            pos.y -= speed * Time.deltaTime * 2;
+            if (pos.y < yLimLower)
+            {
+                pos.y = yLimLower;
+            }
+            transform.position = pos;
+            return;
+        }
+
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         float delta = speed * Time.deltaTime;
         float extraHeight = 0.5f;
         float extraDepth = 0.5f;
@@ -47,7 +59,7 @@ public class CameraController : MonoBehaviour
         {
             pos.y += delta;
         }
-        else if(mousePos.y + extraHeight > Camera.main.transform.position.y + 3.5f)
+        else if(mousePos.y + extraHeight > Camera.main.transform.position.y + 4f)
         {
             pos.y += delta / 2;
         }
@@ -57,7 +69,7 @@ public class CameraController : MonoBehaviour
         {
             pos.y -= delta;
         }
-        else if (mousePos.y + extraDepth < Camera.main.transform.position.y - 3.5f)
+        else if (mousePos.y + extraDepth < Camera.main.transform.position.y - 4f)
         {
             pos.y -= delta / 2;
         }
@@ -71,5 +83,10 @@ public class CameraController : MonoBehaviour
             pos.y = yLimLower;
         }
         rTransform.position = pos;
+    }
+
+    public void OnLose()
+    {
+
     }
 }

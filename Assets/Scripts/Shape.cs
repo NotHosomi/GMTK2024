@@ -85,8 +85,7 @@ public class Shape : MonoBehaviour
     {
         // pick where to place the new block
         int offsetIdx = Random.Range(0, m_vOpenSlots.Count);
-        Vector2Int selection = m_vOpenSlots[offsetIdx];
-        return selection;
+        return m_vOpenSlots[offsetIdx];
     }
     void MarkSlotAsOccupied(Vector2Int tOffset)
     {
@@ -196,6 +195,10 @@ public class Shape : MonoBehaviour
         m_bHeld = true;
         transform.parent = null;
         Tray.Get().Remove(this);
+
+        Vector3 pos = transform.position;
+        pos.z = -3;
+        transform.position = pos;
 
         // set the grab delta
         Vector3 tMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -339,5 +342,9 @@ public class Shape : MonoBehaviour
     {
         m_bHeld = false;
         Tray.Get().Add(this);
+    }
+    public bool IsLocked()
+    {
+        return m_bLocked;
     }
 }

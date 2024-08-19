@@ -36,8 +36,10 @@ public class Cursor : MonoBehaviour
                     }
                     if(hit.collider.name == "SkipButton")
                     {
-                        hit.collider.gameObject.SetActive(false);
-                        GameManager.Get().SkipDay();
+                        if(GameManager.Get().SkipDay())
+                        {
+                            hit.collider.gameObject.SetActive(false);
+                        }
                     }
                 }
             }

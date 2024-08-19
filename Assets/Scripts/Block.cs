@@ -106,7 +106,7 @@ public class Block : MonoBehaviour
             case E_ObstructionType.left:
             case E_ObstructionType.right: return ms_aSpritesSide[Random.Range(0, ms_aSpritesSide.Length)];
             case E_ObstructionType.bottom: return ms_aSpritesBottom[Random.Range(0, ms_aSpritesBottom.Length)];
-            default: return Resources.Load<Sprite>("Sprites/TempObstruction");
+            default: return Resources.Load<Sprite>("Sprites/Err");
         }
     }
     public bool IsObstruction() { return m_bIsObstruction; }

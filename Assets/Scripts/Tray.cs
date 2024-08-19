@@ -7,7 +7,6 @@ public class Tray : MonoBehaviour
     static Tray instance;
     public static Tray Get() { return instance; }
 
-    int msz_nTrayLimit = 6;
     List<Shape> m_vShapes = new List<Shape>();
     [SerializeField] GameObject mz_oLockedMarker;
     [SerializeField] GameObject mz_oSkipButton;
@@ -23,7 +22,7 @@ public class Tray : MonoBehaviour
             instance = this;
         }
 
-        for (int i = 0; i < msz_nTrayLimit; ++i)
+        for (int i = 0; i < 5; ++i)
         {
             m_vShapes.Add(null);
         }
@@ -75,7 +74,7 @@ public class Tray : MonoBehaviour
 
     public bool IsFull()
     {
-        for (int i = 0; i < m_vShapes.Count - 1; ++i)
+        for (int i = 0; i < m_vShapes.Count; ++i)
         {
             if (m_vShapes[i] == null)
             {
@@ -86,9 +85,9 @@ public class Tray : MonoBehaviour
     }
     public bool IsEmpty()
     {
-        for (int i = 0; i < m_vShapes.Count - 1; ++i)
+        for (int i = 0; i < m_vShapes.Count; ++i)
         {
-            if (m_vShapes[i] != null)
+            if (m_vShapes[i] != null && !m_vShapes[i].IsLocked())
             {
                 return false;
             }
@@ -113,6 +112,7 @@ public class Tray : MonoBehaviour
                     GameObject lockMarker = Instantiate(mz_oLockedMarker, transform);
                     Vector2 pos = SlotPos(i);
                     lockMarker.transform.localPosition = new Vector3(pos.x, pos.y, -1);
+                    lockMarker.transform.localScale = new Vector3(2, 2, 2);
                 }
             }
         }
@@ -133,7 +133,7 @@ public class Tray : MonoBehaviour
     Vector2 SlotPos(int i)
     {
         return new Vector2(
-            (i % 2 - 0.5f) * 1.5f,
+            (i % 2 - 0.5f) * 1.25f,
             (2f - i) * 1.25f);
     }
 

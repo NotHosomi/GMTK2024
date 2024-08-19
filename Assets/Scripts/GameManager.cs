@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviour
 {
     [SerializeField] GameObject scoreDisplay;
     [SerializeField] GameObject dayDisplay;
+    [SerializeField] GameObject dayProgressBar;
 
     [SerializeField] Gradient tDaySky;
     [SerializeField] Gradient tNightSky;
@@ -60,7 +61,9 @@ public class GameManager : MonoBehaviour
 
     void Day()
     {
-        Camera.main.backgroundColor = tDaySky.Evaluate(m_fPhaseTime / m_fDayLengthSecs);
+        float progress = m_fPhaseTime / m_fDayLengthSecs;
+        Camera.main.backgroundColor = tDaySky.Evaluate(progress);
+        dayProgressBar.transform.localScale = new Vector3(progress, 1, 1);
         if (m_fPhaseTime > m_fDayLengthSecs)
         {
             BecomeNight();
@@ -69,7 +72,8 @@ public class GameManager : MonoBehaviour
 
     void Night()
     {
-        Camera.main.backgroundColor = tNightSky.Evaluate(m_fPhaseTime / m_fNightLengthSecs);
+        float progress = m_fPhaseTime / m_fNightLengthSecs;
+        Camera.main.backgroundColor = tNightSky.Evaluate(progress);
         if (m_fPhaseTime > m_fNightLengthSecs)
         {
             BecomeDay();
@@ -87,6 +91,8 @@ public class GameManager : MonoBehaviour
 
     void BecomeNight()
     {
+        dayProgressBar.transform.localScale = new Vector3(0, 1, 1);
+
         m_fPhaseTime = 0;
         m_ePhase = E_Phase.night;
         Tower.Get().OnNightTime();
@@ -107,13 +113,14 @@ public class GameManager : MonoBehaviour
         return m_ePhase == E_Phase.night;
     }
 
-    public void SkipDay()
+    public bool SkipDay()
     {
         if(m_ePhase == E_Phase.night)
         {
-            return;
+            return false;
         }
         m_fPhaseTime = m_fDayLengthSecs - 2;
+        return true;
     }
 
     public void AddScore(int amount, Vector2Int coord)

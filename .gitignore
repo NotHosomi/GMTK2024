@@ -470,3 +470,5 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 Assets/TextMesh Pro/
+
+*.7z
