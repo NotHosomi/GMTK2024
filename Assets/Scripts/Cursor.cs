@@ -74,9 +74,10 @@ public class Cursor : MonoBehaviour
             // click was held
             if(m_tClickTime < Time.time - 0.25f && m_oHeldShape != null)
             {
-                if (m_oHeldShape.Release())
+                if (m_oHeldShape.Release(true))
                 {
                     m_oHeldShape = null;
+                    HighlightManager.Get().HidePreview();
                 }
             }
         }

@@ -208,12 +208,17 @@ public class Shape : MonoBehaviour
         m_tGrabDelta = transform.position - tMousePos;
     }
 
-    public bool Release()
+    // returns false if the shape is still held
+    public bool Release(bool forceDrop = false)
     {
         // check if we can snap now?
         if (m_bCouldAttach)
         {
-            return TryAttach();
+            bool attached = TryAttach();
+            if (!forceDrop)
+            {
+                return attached;
+            }
         }
         m_bHeld = false;
         Tray.Get().Add(this);
@@ -233,6 +238,7 @@ public class Shape : MonoBehaviour
         }
         return couldConnect;
     }
+    // returns true if it attaches to the tower
     bool TryAttach()
     {
         if (Tower.Get().CheckValidity(this))

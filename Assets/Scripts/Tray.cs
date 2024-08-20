@@ -123,18 +123,13 @@ public class Tray : MonoBehaviour
             }
         }
         if(bAnyLocked) { SoundManager.Get().PlaySound(SoundManager.E_Sfx.womp); }
-
-        if (m_bRefilling)
-        {
-            return nSlotsToFill;
-        }
-        m_bRefilling = true;
-        if (nSlotsToFill > 0) { StartCoroutine(SpawnShapes(nSlotsToFill)); }
+        if (nSlotsToFill > 0 && !m_bRefilling) { StartCoroutine(SpawnShapes(nSlotsToFill)); }
         return nSlotsToFill;
     }
 
     public IEnumerator SpawnShapes(int n)
     {
+        m_bRefilling = true;
         //Debug.Log("Started coroutine SpawnPieces(" + n + ")");
         for (int i = 0; i < n; ++i)
         {
