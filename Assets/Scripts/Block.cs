@@ -27,7 +27,6 @@ public class Block : MonoBehaviour
     bool m_bHasOpenBase;
 
     bool m_bIsObstruction = false;
-    bool m_bIsHole = false;
 
     public static Block NewBlock(Transform tParent, Vector2Int tOffset, bool outline = true)
     {

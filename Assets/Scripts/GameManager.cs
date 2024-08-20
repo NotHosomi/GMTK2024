@@ -5,7 +5,8 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] bool m_bIsFreeplay = false;
+    bool m_bWait = true;
+    bool m_bIsFreeplay = false;
     bool m_bLost = false;
 
     [SerializeField] GameObject scoreDisplay;
@@ -13,6 +14,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject dayProgressBar;
     [SerializeField] GameObject lossBanner;
     [SerializeField] GameObject skyline;
+    [SerializeField] GameObject RestockButton;
+    [SerializeField] GameObject m_oHowToPlay;
 
     [SerializeField] Gradient tDaySky;
     [SerializeField] Gradient tNightSky;
@@ -45,10 +48,12 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
         }
-        if(m_bIsFreeplay)
+        m_bIsFreeplay = SessionManager.Get().IsFreeplay();
+        if (m_bIsFreeplay)
         {
             m_fDayLengthSecs = 30;
             m_fNightLengthSecs = 30;
+            RestockButton.SetActive(true);
         }
         else
         {
@@ -61,6 +66,7 @@ public class GameManager : MonoBehaviour
         if(m_bIsFreeplay)
         {
             dayProgressBar.transform.parent.gameObject.SetActive(false);
+            StartGame();
         }
     }
 
@@ -71,6 +77,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        if(m_bWait) { return; }
         m_fPhaseTime += Time.deltaTime * m_fTimeScale;
         switch(m_ePhase)
         {
@@ -211,6 +218,7 @@ public class GameManager : MonoBehaviour
         lossBanner.SetActive(true);
         StartCoroutine(LowerLossBanner());
         GetComponent<Crane>().SetLocked(true);
+        SoundManager.Get().PlaySound(SoundManager.E_Sfx.loss);
         SoundManager.Get().SetTense(false);
         GetComponent<CameraController>().OnLose();
     }
@@ -232,5 +240,14 @@ public class GameManager : MonoBehaviour
             return;
         }
         m_fTimeScale = fast ? 4 : 1;
+    }
+
+    public void StartGame()
+    {
+        if(m_bWait)
+        {
+            m_oHowToPlay.SetActive(false);
+            m_bWait = false;
+        }
     }
 }

@@ -96,7 +96,8 @@ public class Tray : MonoBehaviour
     }
 
     // returns the number of slots refilled
-    public int Refill()
+    bool m_bRefilling = false;
+    public int Refill(bool bLock = true)
     {
         int nSlotsToFill = 0;
         bool bAnyLocked = false;
@@ -108,17 +109,26 @@ public class Tray : MonoBehaviour
             }
             else
             {
-                if(m_vShapes[i].Lock())
+                if (bLock)
                 {
-                    GameObject lockMarker = Instantiate(mz_oLockedMarker, transform);
-                    Vector2 pos = SlotPos(i);
-                    lockMarker.transform.localPosition = new Vector3(pos.x, pos.y, -1);
-                    lockMarker.transform.localScale = new Vector3(2, 2, 2);
-                    bAnyLocked = true;
+                    if (m_vShapes[i].Lock())
+                    {
+                        GameObject lockMarker = Instantiate(mz_oLockedMarker, transform);
+                        Vector2 pos = SlotPos(i);
+                        lockMarker.transform.localPosition = new Vector3(pos.x, pos.y, -1);
+                        lockMarker.transform.localScale = new Vector3(2, 2, 2);
+                        bAnyLocked = true;
+                    }
                 }
             }
         }
         if(bAnyLocked) { SoundManager.Get().PlaySound(SoundManager.E_Sfx.womp); }
+
+        if (m_bRefilling)
+        {
+            return nSlotsToFill;
+        }
+        m_bRefilling = true;
         if (nSlotsToFill > 0) { StartCoroutine(SpawnShapes(nSlotsToFill)); }
         return nSlotsToFill;
     }
@@ -132,6 +142,7 @@ public class Tray : MonoBehaviour
             new GameObject().AddComponent<Shape>();
             SoundManager.Get().PlaySound(SoundManager.E_Sfx.pop);
         }
+        m_bRefilling = false;
     }
 
     Vector2 SlotPos(int i)
@@ -139,5 +150,21 @@ public class Tray : MonoBehaviour
         return new Vector2(
             (i % 2 - 0.5f) * 1.2f,
             2.25f - i * 1.5f);
+    }
+
+    public void Clear()
+    {
+        for(int i = 0; i < m_vShapes.Count; ++i)
+        {
+            if(m_vShapes[i] != null)
+            {
+                Destroy(m_vShapes[i].gameObject);
+            }
+            m_vShapes[i] = null;
+        }
+    }
+    public bool IsRefilling()
+    {
+        return m_bRefilling;
     }
 }

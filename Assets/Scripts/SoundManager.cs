@@ -7,19 +7,22 @@ public class SoundManager : MonoBehaviour
 {
     static SoundManager instance;
     public static SoundManager Get() { return instance; }
-
+    [SerializeField] GameObject m_oCanvas;
+    [SerializeField] GameObject m_oEventManager;
 
     public enum E_Sfx
     {
         pop,
         click,
-        womp
+        womp,
+        loss
     }
     [SerializeField] AudioClip[] m_aPop;
     [SerializeField] AudioClip[] m_aClick;
     [SerializeField] AudioClip m_oWomp;
+    [SerializeField] AudioClip m_oLoss;
     AudioSource m_oSfx;
-    enum E_Song
+    public enum E_Song
     {
         calm,
         normal,
@@ -43,9 +46,6 @@ public class SoundManager : MonoBehaviour
 
     void Awake()
     {
-        DontDestroyOnLoad(gameObject);
-        DontDestroyOnLoad(GameObject.Find("Canvas"));
-        DontDestroyOnLoad(GameObject.Find("EventSystem"));
 
         m_oSliderSFX = GameObject.Find("SFX Slider").GetComponent<Slider>();
         m_oSliderCoverSFX = GameObject.Find("SFXSliderHider").transform;
@@ -88,7 +88,7 @@ public class SoundManager : MonoBehaviour
     {
         if(!m_bIsTense)
         {
-            changeSong(E_Song.calm);
+            ChangeSong(E_Song.calm);
         }
     }
     public void OnDay()
@@ -96,20 +96,20 @@ public class SoundManager : MonoBehaviour
         if (m_bIsTense)
         {
             // switch to day music
-            changeSong(E_Song.tense);
+            ChangeSong(E_Song.tense);
         }
         else
         {
             // switch to day music
-            changeSong(E_Song.normal);
+            ChangeSong(E_Song.normal);
         }
     }
     public void OnLoss()
     {
-        changeSong(E_Song.calm);
+        ChangeSong(E_Song.calm);
     }
 
-    void changeSong(E_Song to)
+    public void ChangeSong(E_Song to)
     {
         m_eCurrentSong = to;
         StartCoroutine(crossfade(to, 1));
@@ -199,6 +199,8 @@ public class SoundManager : MonoBehaviour
         case E_Sfx.pop: m_oSfx.PlayOneShot(m_aPop[Random.Range(0, m_aPop.Length)]);
             break;
         case E_Sfx.womp: m_oSfx.PlayOneShot(m_oWomp);
+            break;
+        case E_Sfx.loss: m_oSfx.PlayOneShot(m_oLoss);
             break;
         }
     }

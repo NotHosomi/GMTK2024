@@ -5,6 +5,14 @@ using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
+    void Awake()
+    {
+        if(SoundManager.Get() == null)
+        {
+            GameObject go = Instantiate(Resources.Load("Core/LiveForever") as GameObject);
+            DontDestroyOnLoad(go);
+        }
+    }
     enum E_MenuItems
     {
         challenge,
@@ -53,9 +61,9 @@ public class MainMenu : MonoBehaviour
                 SessionManager.Get().SetFreeplay(false);
                 SceneManager.LoadScene("GameScene");
             }
-            else if (hover == m_aMenuEntries[(int)E_MenuItems.challenge])
+            else if (hover == m_aMenuEntries[(int)E_MenuItems.freeplay])
             {
-                SessionManager.Get().SetFreeplay(false);
+                SessionManager.Get().SetFreeplay(true);
                 SceneManager.LoadScene("GameScene");
             }
             else if (hover == m_aMenuEntries[(int)E_MenuItems.credits])
