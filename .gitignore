@@ -472,3 +472,5 @@ FodyWeavers.xsd
 Assets/TextMesh Pro/
 
 *.7z
+
+BuildWebGL/
