@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject dayDisplay;
     [SerializeField] GameObject dayProgressBar;
     [SerializeField] GameObject lossBanner;
+    [SerializeField] GameObject skyline;
 
     [SerializeField] Gradient tDaySky;
     [SerializeField] Gradient tNightSky;
@@ -105,13 +106,19 @@ public class GameManager : MonoBehaviour
     {
         m_fPhaseTime = 0;
         m_ePhase = E_Phase.day;
-        ++m_nCycles;
+
         dayDisplay.GetComponent<TextMeshPro>().text = (m_nCycles + 1).ToString();
+        skyline.transform.GetChild(0).gameObject.SetActive(false);
         Tower.Get().OnDayTime();
         SoundManager.Get().OnDay();
-        if(Tray.Get().IsEmpty())
+
+        if (Tray.Get().IsEmpty() && Cursor.Get().GetHeldShape() == null)
         {
             SetSpeedup(true);
+        }
+        if (!m_bLost)
+        {
+            ++m_nCycles;
         }
     }
 
@@ -121,6 +128,7 @@ public class GameManager : MonoBehaviour
         m_fPhaseTime = 0;
         m_ePhase = E_Phase.night;
         SetSpeedup(false);
+        skyline.transform.GetChild(0).gameObject.SetActive(true);
         Tower.Get().OnNightTime();
         SoundManager.Get().OnNight();
 

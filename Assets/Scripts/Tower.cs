@@ -114,6 +114,7 @@ public class Tower
             if (IsWall(GetBlock(new Vector2Int(coord.x, coord.y + 1)))) { ++score; }
             if (IsWall(GetBlock(new Vector2Int(coord.x, coord.y - 1)))) { ++score; }
             if (score == 3) { score = 4; }
+            if (score >= 3) { score = 8; }
             GameManager.Get().AddScore(score, coord);
             
         }

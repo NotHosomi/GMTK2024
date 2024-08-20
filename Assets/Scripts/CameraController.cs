@@ -25,9 +25,9 @@ public class CameraController : MonoBehaviour
         if(m_bZooming)
         {
             pos.y += m_fZoomSpeed * Time.deltaTime;
-            if(pos.y > Tower.Get().GetHeight())
+            if(pos.y > Tower.Get().GetHeight()-1)
             {
-                pos.y = Tower.Get().GetHeight();
+                pos.y = Tower.Get().GetHeight()-1;
                 m_bZooming = false;
             }
             rTransform.position = pos;

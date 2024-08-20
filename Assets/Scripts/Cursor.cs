@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Cursor : MonoBehaviour
 {
@@ -34,12 +35,9 @@ public class Cursor : MonoBehaviour
                     {
                         m_oHeldShape.Grab();
                     }
-                    if(hit.collider.name == "SkipButton")
+                    if(hit.collider.name == "BtnHome")
                     {
-                        if(GameManager.Get().SkipDay())
-                        {
-                            hit.collider.gameObject.SetActive(false);
-                        }
+                        SceneManager.LoadScene("Menu");
                     }
                 }
             }
@@ -51,13 +49,13 @@ public class Cursor : MonoBehaviour
                 }
             }
         }
-        if(Input.GetMouseButtonDown(2))
-        {
-            if(!Tray.Get().IsFull())
-            {
-                new GameObject().AddComponent<Shape>();
-            }
-        }
+        //if(Input.GetMouseButtonDown(2))
+        //{
+        //    if(!Tray.Get().IsFull())
+        //    {
+        //        new GameObject().AddComponent<Shape>();
+        //    }
+        //}
     }
 
     public Shape GetHeldShape()
