@@ -474,3 +474,9 @@ Assets/TextMesh Pro/
 *.7z
 
 BuildWebGL/
+
+Highrise_v1.0/
+
+BuildWebGL_v1/
+
+*.zip

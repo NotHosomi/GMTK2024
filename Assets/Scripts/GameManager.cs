@@ -16,6 +16,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject skyline;
     [SerializeField] GameObject RestockButton;
     [SerializeField] GameObject m_oHowToPlay;
+    [SerializeField] Transform m_oSun;
+    [SerializeField] Transform m_oMoon;
+    [SerializeField] AnimationCurve celestialArc;
 
     [SerializeField] Gradient tDaySky;
     [SerializeField] Gradient tNightSky;
@@ -93,6 +96,12 @@ public class GameManager : MonoBehaviour
         float progress = m_fPhaseTime / m_fDayLengthSecs;
         Camera.main.backgroundColor = tDaySky.Evaluate(progress);
         dayProgressBar.transform.localScale = new Vector3(progress, 1, 1);
+
+        Vector3 pos = m_oSun.localPosition;
+        pos.x = Mathf.Lerp(-10, 10, progress);
+        pos.y = celestialArc.Evaluate(progress);
+        m_oSun.localPosition = pos;
+
         if (m_fPhaseTime > m_fDayLengthSecs)
         {
             BecomeNight();
@@ -103,6 +112,12 @@ public class GameManager : MonoBehaviour
     {
         float progress = m_fPhaseTime / m_fNightLengthSecs;
         Camera.main.backgroundColor = tNightSky.Evaluate(progress);
+
+        Vector3 pos = m_oMoon.localPosition;
+        pos.x = Mathf.Lerp(-10, 10, progress);
+        pos.y = celestialArc.Evaluate(progress);
+        m_oMoon.localPosition = pos;
+
         if (m_fPhaseTime > m_fNightLengthSecs)
         {
             BecomeDay();
